@@ -1076,6 +1076,7 @@ function loginApp(){
   U.calYear=d.getFullYear();U.calMonth=d.getMonth();
   applyTheme();applyAppIcon();
   updateStreak();
+  syncProfileData();
   updateCountdown();setInterval(updateCountdown,60000);
   switchMode('school');
   checkAchievements();
@@ -1468,7 +1469,16 @@ function closeFocus(){clearInterval(timerInterval);timerInterval=null;document.g
 // ═══ SYNC TO SUPABASE (for parent view) ═══
 async function syncProfileData(){
   if(!SB_USER||!U)return;
-  await sb.from('profiles').update({data:{assignments:U.assignments||[],grades:U.grades||[],name:U.name,emoji:U.emoji}}).eq('id',SB_USER.id);
+  await sb.from('profiles').update({data:{
+    assignments:U.assignments||[],
+    grades:U.grades||[],
+    classes:U.classes||[],
+    streak:U.streak||0,
+    earnedAchs:U.earnedAchs||[],
+    banner:U.banner||'default',
+    name:U.name,
+    emoji:U.emoji
+  }}).eq('id',SB_USER.id);
 }
 
 // ═══ EDIT ═══
@@ -2099,6 +2109,11 @@ async function renderFriendsPage(){
   const usernameEl=document.getElementById('my-username-display');
   if(usernameEl)usernameEl.textContent=me?.username?('@'+me.username):'not set yet';
   if(me?.username&&document.getElementById('username-set'))document.getElementById('username-set').value=me.username;
+  // Show loading in both sections
+  const reqEl=document.getElementById('friend-requests-section');
+  const listEl=document.getElementById('friends-list-section');
+  if(reqEl)reqEl.innerHTML='';
+  if(listEl)listEl.innerHTML='<div class="loading-overlay"><div class="loading-spinner"></div>Loading friends…</div>';
   // Pending requests
   await renderFriendRequests();
   // Friends list
