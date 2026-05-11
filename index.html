@@ -648,6 +648,7 @@ button{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:poi
     </div>
 
     <div id="page-achievements" class="page">
+      <div style="text-align:center;padding:20px 0 16px">
         <div style="font-size:36px;margin-bottom:8px">🎖️</div>
         <div style="font-family:'Quicksand',sans-serif;font-size:20px;font-weight:700">Your Achievement Sash</div>
         <div style="font-size:13px;color:var(--text3);font-weight:600;margin-top:4px">Grayed out = not yet earned · Colored = earned!</div>
@@ -677,7 +678,7 @@ button{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:poi
           <button class="btn-blue" onclick="addWorkItem()">Add 💼</button>
         </div>
       </div>
-      <div id="work-sched-body"></div>
+      <div id="work-sched-body"><div class="empty">No work items yet 💼</div></div>
     </div>
 
     <div id="page-work-calendar" class="page" style="display:none">
@@ -696,7 +697,7 @@ button{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:poi
     <!-- ALL PAGES -->
     <div id="page-all-events" class="page" style="display:none">
       <div class="stats" id="all-stats-row"></div>
-      <div id="all-events-body"></div>
+      <div id="all-events-body"><div class="empty">Nothing yet! 🌐</div></div>
     </div>
 
     <div id="page-all-calendar" class="page" style="display:none">
@@ -727,7 +728,7 @@ button{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:poi
           <button class="btn-pink" onclick="addPersonalTask()">Add 🌸</button>
         </div>
       </div>
-      <div id="personal-body"></div>
+      <div id="personal-body"><div class="empty">No personal tasks yet — add one above! 🌸</div></div>
     </div>
 
     <div id="page-all-achievements" class="page" style="display:none">
@@ -769,7 +770,7 @@ button{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:poi
           <button class="btn btn-sm" onclick="joinSharedCal()">Join →</button>
         </div>
       </div>
-      <div id="shared-cals-list"></div>
+      <div id="shared-cals-list"><div class="loading-overlay"><div class="loading-spinner"></div>Loading your calendars…</div></div>
     </div>
 
     <div id="page-social-groups" class="page" style="display:none">
@@ -785,7 +786,7 @@ button{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:poi
           <button class="btn btn-sm" onclick="joinStudyGroup()">Join →</button>
         </div>
       </div>
-      <div id="study-groups-list"></div>
+      <div id="study-groups-list"><div class="loading-overlay"><div class="loading-spinner"></div>Loading…</div></div>
     </div>
 
     <div id="page-social-parent" class="page" style="display:none">
@@ -816,7 +817,7 @@ button{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:poi
         <div id="friend-search-results" style="margin-top:10px"></div>
       </div>
       <div id="friend-requests-section"></div>
-      <div id="friends-list-section"></div>
+      <div id="friends-list-section"><div class="loading-overlay"><div class="loading-spinner"></div>Loading friends…</div></div>
     </div>
 
     <!-- SOCIAL: FRIEND PROFILE (sub-view) -->
@@ -850,7 +851,7 @@ button{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:poi
       </div>
       <div id="study-plan-output"></div>
       <div class="sec" style="margin-top:8px">Previous plans</div>
-      <div id="saved-plans-list"></div>
+      <div id="saved-plans-list"><div class="empty" style="padding:1.5rem">No plans yet</div></div>
     </div>
 
   </div>
@@ -1556,10 +1557,10 @@ function showPage(p){
   if(p==='all-personal'){renderPersonal();}
   if(p==='all-launch'){renderCustomLinks();}
   if(p==='all-achievements'){renderSash('sash-grid-all');}
-  if(p==='social-calendars'){renderSharedCals();}
-  if(p==='social-groups'){renderStudyGroups();}
+  if(p==='social-calendars'){document.getElementById('shared-cals-list').innerHTML='<div class="loading-overlay"><div class="loading-spinner"></div>Loading your calendars…</div>';renderSharedCals();}
+  if(p==='social-groups'){document.getElementById('study-groups-list').innerHTML='<div class="loading-overlay"><div class="loading-spinner"></div>Loading your groups…</div>';renderStudyGroups();}
   if(p==='social-parent'){document.getElementById('parent-link-display').innerHTML='';}
-  if(p==='social-friends'){renderFriendsPage();}
+  if(p==='social-friends'){document.getElementById('friends-list-section').innerHTML='<div class="loading-overlay"><div class="loading-spinner"></div>Loading friends…</div>';renderFriendsPage();}
   if(p==='social-planner'){renderStudyPlannerPage();}
 }
 function popClassSelects(){
