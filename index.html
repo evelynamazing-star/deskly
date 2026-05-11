@@ -1896,7 +1896,15 @@ async function generateAIFlashcards(){
   const num=document.getElementById('fc-ai-num').value;
   const statusEl=document.getElementById('fc-ai-status'),btn=document.getElementById('fc-ai-gen-btn');
   btn.disabled=true;btn.textContent='Generating...';statusEl.innerHTML=`<span class="ai-spinner"></span> Generating ${num} flashcards…`;
-  const prompt=`You are a study assistant. Generate exactly ${num} flashcards based on the CONTENT of this material — focus on key concepts, definitions, theorems, formulas, properties, and examples. Do NOT make cards about titles, headers, page numbers, or document structure. Each card should test understanding of actual subject matter. Return ONLY a JSON array, no markdown, no explanation: [{"front":"specific concept, term, or question about the subject","back":"clear definition, answer, or explanation"},...]${fcFileContent?'\n\nMaterial:\n'+fcFileContent.slice(0,12000):''}`;
+  const prompt=`You are a math tutor. Based on the formulas, geometric concepts, worked examples, and problems in this material, generate exactly ${num} flashcards that help a student study the actual math content.
+
+Rules:
+- Front: a specific formula name, concept, or problem setup (e.g. "Area of a sector formula" or "A parallelogram has base 24.3m and area 211.41m². Find the height.")
+- Back: the formula, definition, answer, or step-by-step solution
+- NEVER make cards about the document title, chapter name, study guide name, or document structure
+- Focus ONLY on the actual math: formulas, geometric properties, example problems, definitions
+
+Return ONLY a JSON array, no markdown, no explanation: [{"front":"specific math concept, formula name, or problem","back":"formula, definition, or worked answer"},...]${fcFileContent?'\n\nMaterial:\n'+fcFileContent.slice(0,12000):''}`;
   try{
     const resp=await fetch('/api/quiz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,imageBase64:fcFileBase64||null,mimeType:fcFileMime||null,isPDF:false,pdfImages:fcPdfImages||null})});
     const data=await resp.json();if(!resp.ok)throw new Error(data.error||'Server error');
@@ -2011,7 +2019,17 @@ async function generateAIQuiz(){
   if(!U.fileContent&&!U.fileBase64){toast('Upload a file first');return;}
   const num=document.getElementById('ai-num').value,statusEl=document.getElementById('ai-status'),btn=document.getElementById('ai-gen-btn');
   btn.disabled=true;btn.textContent='Generating...';statusEl.innerHTML=`<span class="ai-spinner"></span> Generating ${num} questions…`;
-  const prompt=`You are a study assistant. Generate exactly ${num} multiple-choice questions based on the CONTENT of this material — focus on key concepts, definitions, theorems, formulas, properties, and examples. Do NOT ask about titles, headers, page numbers, or document structure. Each question should test understanding of actual subject matter. Return ONLY a JSON array, no markdown, no explanation: [{"q":"question about the actual subject content","opts":["A","B","C","D"],"correct":0},...] where correct is the 0-based index of the right answer.${U.fileContent?'\n\nMaterial:\n'+U.fileContent.slice(0,12000):''}`;
+  const prompt=`You are a geometry tutor. Based on the math problems, figures, formulas, and worked examples in this material, generate exactly ${num} multiple-choice questions that test actual mathematical understanding. 
+
+Rules:
+- Ask about specific formulas (e.g. "What is the formula for the area of a sector?")
+- Ask students to solve or set up problems based on given values (e.g. "A circle has radius 2.9 ft. What is its area rounded to the nearest hundredth?")
+- Ask about geometric concepts, properties, and definitions shown in the material
+- NEVER ask about the document title, chapter number, study guide name, or document structure
+- NEVER ask "what is the main topic of this document" or similar meta-questions
+- Base questions ONLY on the actual math content, figures, and worked examples
+
+Return ONLY a JSON array, no markdown, no explanation: [{"q":"specific math question","opts":["A","B","C","D"],"correct":0},...] where correct is the 0-based index of the right answer.${U.fileContent?'\n\nMaterial:\n'+U.fileContent.slice(0,12000):''}`;
   try{
     const resp=await fetch('/api/quiz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,imageBase64:U.fileBase64||null,mimeType:U.fileMime||null,isPDF:false,pdfImages:U.pdfImages||null})});
     const data=await resp.json();if(!resp.ok)throw new Error(data.error||'Server error');
