@@ -57,7 +57,7 @@ body::before{content:'';position:fixed;inset:0;background:var(--bg-pattern);poin
 .search-hit{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-sm);cursor:pointer;transition:background 0.12s}
 .search-hit:hover{background:var(--bg3)}
 
-.streak-pill{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #fcd34d;border-radius:var(--r-pill);padding:5px 12px;font-size:12px;font-weight:800;color:#92400e;white-space:nowrap}
+.streak-pill{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #fcd34d;border-radius:var(--r-pill);padding:7px 16px;font-size:14px;font-weight:800;color:#92400e;white-space:nowrap}
 
 /* ── ACHIEVEMENTS SASH ── */
 .sash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:14px;padding:4px}
@@ -137,9 +137,9 @@ body::before{content:'';position:fixed;inset:0;background:var(--bg-pattern);poin
 /* ── APP ── */
 #app{display:none;flex-direction:column;height:100dvh;max-width:960px;margin:0 auto}
 #topbar{padding:14px 22px 0;flex-shrink:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.logo{font-family:'Quicksand',sans-serif;font-size:20px;font-weight:700;background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-#date-pill{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-pill);padding:5px 12px;font-size:12px;font-weight:600;color:var(--text2)}
-.countdown-pill{background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-pill);padding:5px 12px;font-size:12px;font-weight:800;color:var(--text2);white-space:nowrap}
+.logo{font-family:'Quicksand',sans-serif;font-size:26px;font-weight:700;background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#date-pill{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-pill);padding:7px 16px;font-size:14px;font-weight:600;color:var(--text2)}
+.countdown-pill{background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-pill);padding:7px 16px;font-size:14px;font-weight:800;color:var(--text2);white-space:nowrap}
 .user-chip{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-pill);padding:5px 12px;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.15s}
 .user-chip:hover{background:var(--bg4)}
 
@@ -614,8 +614,40 @@ button{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:poi
       <div id="fc-deck-list-section"><div class="sec">Saved decks</div><div id="fc-deck-list"></div></div>
     </div>
 
+    <!-- SCHOOL: STUDY GUIDE -->
+    <div id="page-studyguide" class="page">
+      <div class="panel" style="border-top:3px solid var(--acc1)">
+        <div style="font-size:15px;font-weight:800;margin-bottom:4px">📄 Study Guide Generator</div>
+        <div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:14px">Upload your notes or a PDF and get a condensed, styled study guide you can download</div>
+        <div class="dropzone" id="sg-dropzone" onclick="document.getElementById('sg-file-input').click()" ondragover="sgDzOver(event)" ondragleave="sgDzLeave(event)" ondrop="sgDzDrop(event)">
+          <div style="font-size:32px;margin-bottom:8px">📄</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text2)">Drop a file or click to upload</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px;font-weight:600">PDF, TXT, or image</div>
+        </div>
+        <input type="file" id="sg-file-input" style="display:none" accept=".pdf,.txt,.png,.jpg,.jpeg" onchange="handleSGFile(this)">
+        <div id="sg-file-status" style="display:none;margin-top:10px"></div>
+        <div style="margin-top:12px" id="sg-options" style="display:none">
+          <div class="row" style="margin-bottom:8px">
+            <div class="flex1">
+              <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px">Subject / title</label>
+              <input type="text" id="sg-title" placeholder="e.g. Geometry Unit 4 — Circles">
+            </div>
+            <div class="flex1">
+              <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px">Class</label>
+              <select id="sg-class"></select>
+            </div>
+          </div>
+          <button class="btn-primary" id="sg-gen-btn" style="width:100%" onclick="generateStudyGuide()">✨ Generate study guide</button>
+        </div>
+      </div>
+      <div id="sg-output"></div>
+      <div id="sg-saved-section">
+        <div class="sec">Saved guides</div>
+        <div id="sg-saved-list"></div>
+      </div>
+    </div>
+
     <div id="page-achievements" class="page">
-      <div style="text-align:center;padding:20px 0 16px">
         <div style="font-size:36px;margin-bottom:8px">🎖️</div>
         <div style="font-family:'Quicksand',sans-serif;font-size:20px;font-weight:700">Your Achievement Sash</div>
         <div style="font-size:13px;color:var(--text3);font-weight:600;margin-top:4px">Grayed out = not yet earned · Colored = earned!</div>
@@ -1468,12 +1500,12 @@ document.getElementById('edit-modal-bg').addEventListener('click',function(e){if
 
 // ═══ MODE / NAV ═══
 const MODES={
-  school:{pages:['schedule','weekly','grades','calendar','classes','quiz','flashcards'],labels:['📅 Schedule','📆 This Week','📊 Grades','🗓 Calendar','📚 Classes','🧠 Quizzes','🃏 Flashcards']},
+  school:{pages:['schedule','weekly','grades','calendar','classes','quiz','flashcards','studyguide'],labels:['📅 Schedule','📆 This Week','📊 Grades','🗓 Calendar','📚 Classes','🧠 Quizzes','🃏 Flashcards','📄 Study Guide']},
   work:{pages:['work-schedule','work-calendar'],labels:['📅 Schedule','🗓 Calendar']},
   all:{pages:['all-events','all-calendar','all-personal','all-launch','all-achievements'],labels:['🌐 All Events','🗓 Calendar','🌸 Personal','🚀 Launch','🎖️ Badges']},
   social:{pages:['social-calendars','social-groups','social-friends','social-planner','social-parent'],labels:['📅 Shared Calendars','👥 Study Groups','👤 Friends','📖 Study Planner','👀 Parent View']}
 };
-const ALL_PAGES=['schedule','weekly','grades','calendar','classes','quiz','flashcards','achievements','work-schedule','work-calendar','all-events','all-calendar','all-personal','all-launch','all-achievements','social-calendars','social-groups','social-parent','social-friends','social-friend-profile','social-planner'];
+const ALL_PAGES=['schedule','weekly','grades','calendar','classes','quiz','flashcards','achievements','studyguide','work-schedule','work-calendar','all-events','all-calendar','all-personal','all-launch','all-achievements','social-calendars','social-groups','social-parent','social-friends','social-friend-profile','social-planner'];
 
 function switchMode(m){
   mode=m;
@@ -1496,6 +1528,7 @@ function showPage(p){
   if(p==='quiz'){renderQuizPage();}
   if(p==='flashcards'){renderFlashcardsPage();}
   if(p==='achievements'){renderSash('sash-grid');}
+  if(p==='studyguide'){renderStudyGuidePage();}
   if(p==='work-schedule'){renderWStats();renderWorkItems();}
   if(p==='work-calendar'){renderCal('work');}
   if(p==='all-events'){renderAllStats();renderAllEvents();}
@@ -1512,7 +1545,7 @@ function showPage(p){
 function popClassSelects(){
   if(!U)return;
   const opts='<option value="">— No class —</option>'+(U.classes||[]).map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
-  ['a-class','q-class','g-class','fc-deck-class'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+  ['a-class','q-class','g-class','fc-deck-class','sg-class'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
 
 // ═══ QUICK LAUNCH ═══
@@ -1863,7 +1896,7 @@ async function generateAIFlashcards(){
   const num=document.getElementById('fc-ai-num').value;
   const statusEl=document.getElementById('fc-ai-status'),btn=document.getElementById('fc-ai-gen-btn');
   btn.disabled=true;btn.textContent='Generating...';statusEl.innerHTML=`<span class="ai-spinner"></span> Generating ${num} flashcards…`;
-  const prompt=`Generate exactly ${num} flashcards to help a student study this material. Return ONLY a JSON array, no markdown: [{"front":"term or question","back":"definition or answer"},...]${fcFileContent?'\n\nMaterial:\n'+fcFileContent.slice(0,12000):''}`;
+  const prompt=`You are a study assistant. Generate exactly ${num} flashcards based on the CONTENT of this material — focus on key concepts, definitions, theorems, formulas, properties, and examples. Do NOT make cards about titles, headers, page numbers, or document structure. Each card should test understanding of actual subject matter. Return ONLY a JSON array, no markdown, no explanation: [{"front":"specific concept, term, or question about the subject","back":"clear definition, answer, or explanation"},...]${fcFileContent?'\n\nMaterial:\n'+fcFileContent.slice(0,12000):''}`;
   try{
     const resp=await fetch('/api/quiz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,imageBase64:fcFileBase64||null,mimeType:fcFileMime||null,isPDF:false,pdfImages:fcPdfImages||null})});
     const data=await resp.json();if(!resp.ok)throw new Error(data.error||'Server error');
@@ -1978,7 +2011,7 @@ async function generateAIQuiz(){
   if(!U.fileContent&&!U.fileBase64){toast('Upload a file first');return;}
   const num=document.getElementById('ai-num').value,statusEl=document.getElementById('ai-status'),btn=document.getElementById('ai-gen-btn');
   btn.disabled=true;btn.textContent='Generating...';statusEl.innerHTML=`<span class="ai-spinner"></span> Generating ${num} questions…`;
-  const prompt=`Generate exactly ${num} multiple-choice questions to help a student study this material. Return ONLY a JSON array, no markdown: [{"q":"question","opts":["A","B","C","D"],"correct":0},...] where correct is the 0-based index.${U.fileContent?'\n\nMaterial:\n'+U.fileContent.slice(0,12000):''}`;
+  const prompt=`You are a study assistant. Generate exactly ${num} multiple-choice questions based on the CONTENT of this material — focus on key concepts, definitions, theorems, formulas, properties, and examples. Do NOT ask about titles, headers, page numbers, or document structure. Each question should test understanding of actual subject matter. Return ONLY a JSON array, no markdown, no explanation: [{"q":"question about the actual subject content","opts":["A","B","C","D"],"correct":0},...] where correct is the 0-based index of the right answer.${U.fileContent?'\n\nMaterial:\n'+U.fileContent.slice(0,12000):''}`;
   try{
     const resp=await fetch('/api/quiz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,imageBase64:U.fileBase64||null,mimeType:U.fileMime||null,isPDF:false,pdfImages:U.pdfImages||null})});
     const data=await resp.json();if(!resp.ok)throw new Error(data.error||'Server error');
@@ -2239,6 +2272,206 @@ function renderSavedPlans(){
   }).join('');
 }
 function deletePlan(id){U.studyPlans=(U.studyPlans||[]).filter(p=>p.id!==id);saveU();renderSavedPlans();document.getElementById('study-plan-output').innerHTML='';}
+
+// ═══ STUDY GUIDE ═══
+let sgFileContent=null,sgFileBase64=null,sgFileMime=null,sgFileType=null,sgPdfImages=null;
+
+function sgDzOver(e){e.preventDefault();document.getElementById('sg-dropzone').classList.add('drag');}
+function sgDzLeave(){document.getElementById('sg-dropzone').classList.remove('drag');}
+function sgDzDrop(e){e.preventDefault();sgDzLeave();const f=e.dataTransfer.files[0];if(f)processSGFile(f);}
+function handleSGFile(i){const f=i.files[0];if(f)processSGFile(f);}
+
+function renderStudyGuidePage(){
+  popClassSelects();
+  renderSavedGuides();
+  document.getElementById('sg-output').innerHTML='';
+}
+
+function processSGFile(file){
+  const statusEl=document.getElementById('sg-file-status');
+  statusEl.style.display='flex';statusEl.className='ai-status';
+  statusEl.innerHTML='<span class="ai-spinner"></span> Reading file…';
+  const ext=file.name.split('.').pop().toLowerCase();sgFileType=ext;
+  if(ext==='pdf'){
+    extractPDFText(file).then(result=>{
+      if(result.type==='text'){sgFileContent=result.content;sgFileBase64=null;sgFileMime=null;sgPdfImages=null;}
+      else{sgPdfImages=result.content;sgFileContent=null;sgFileBase64=null;sgFileMime=null;}
+      statusEl.innerHTML=`<span style="font-size:18px">📄</span><span style="flex:1"><b>${esc(file.name)}</b> ${result.type==='images'?'(scanned — using vision)':'(text extracted)'}</span>`;
+      document.getElementById('sg-options').style.display='block';
+      if(!document.getElementById('sg-title').value)document.getElementById('sg-title').value=file.name.replace(/\.[^/.]+$/,'');
+    }).catch(()=>{statusEl.innerHTML='<span style="font-size:18px">❌</span><span>Could not read file</span>';});
+  } else if(ext==='txt'){
+    const r=new FileReader();r.onload=e=>{sgFileContent=e.target.result;sgFileBase64=null;sgFileMime=null;sgPdfImages=null;statusEl.innerHTML=`<span style="font-size:18px">📄</span><span><b>${esc(file.name)}</b> ready!</span>`;document.getElementById('sg-options').style.display='block';if(!document.getElementById('sg-title').value)document.getElementById('sg-title').value=file.name.replace(/\.[^/.]+$/,'');};r.readAsText(file);
+  } else {
+    const r=new FileReader();r.onload=e=>{sgFileBase64=e.target.result.split(',')[1];sgFileContent=null;sgFileMime=file.type;sgPdfImages=null;statusEl.innerHTML=`<span style="font-size:18px">📄</span><span><b>${esc(file.name)}</b> ready!</span>`;document.getElementById('sg-options').style.display='block';if(!document.getElementById('sg-title').value)document.getElementById('sg-title').value=file.name.replace(/\.[^/.]+$/,'');};r.readAsDataURL(file);
+  }
+}
+
+async function generateStudyGuide(){
+  if(!sgFileContent&&!sgFileBase64&&!sgPdfImages){toast('Upload a file first');return;}
+  const title=document.getElementById('sg-title').value.trim()||'Study Guide';
+  const cls=document.getElementById('sg-class').value;
+  const btn=document.getElementById('sg-gen-btn');
+  const outputEl=document.getElementById('sg-output');
+  btn.disabled=true;btn.textContent='Generating…';
+  outputEl.innerHTML='<div class="loading-overlay"><div class="loading-spinner"></div> Generating your study guide…</div>';
+
+  const prompt=`You are a study guide writer. Based on the provided material, create a comprehensive but condensed study guide. Focus ONLY on the actual subject content — key concepts, definitions, theorems, formulas, important properties, and worked examples. Ignore headers, page numbers, and document structure.
+
+Return ONLY a JSON object in this exact format, no markdown:
+{
+  "sections": [
+    {
+      "title": "section name",
+      "type": "concepts|formulas|vocab|examples|tips",
+      "items": [
+        {"term": "term or concept name", "def": "clear explanation or formula"},
+        ...
+      ]
+    },
+    ...
+  ],
+  "summary": "2-3 sentence overview of the main topic"
+}
+
+Material title: ${title}${sgFileContent?'\n\nMaterial:\n'+sgFileContent.slice(0,12000):''}`;
+
+  try{
+    const resp=await fetch('/api/quiz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,imageBase64:sgFileBase64||null,mimeType:sgFileMime||null,isPDF:false,pdfImages:sgPdfImages||null})});
+    const data=await resp.json();if(!resp.ok)throw new Error(data.error||'Server error');
+    const guide=JSON.parse(data.text.replace(/```json|```/g,'').trim());
+    if(!guide.sections)throw new Error('Invalid response');
+    // Save guide
+    U.studyGuides=U.studyGuides||[];
+    const guideObj={id:Date.now(),title,cls,sections:guide.sections,summary:guide.summary,created:today()};
+    U.studyGuides.unshift(guideObj);if(U.studyGuides.length>10)U.studyGuides=U.studyGuides.slice(0,10);
+    saveU();
+    renderGuideOutput(guideObj);
+    renderSavedGuides();
+    btn.disabled=false;btn.textContent='✨ Generate study guide';
+    toast('Study guide ready! 📄');
+  }catch(err){
+    outputEl.innerHTML=`<div class="panel" style="color:var(--red-day);font-weight:700">❌ ${esc(err.message||'Try again')}</div>`;
+    btn.disabled=false;btn.textContent='✨ Generate study guide';
+  }
+}
+
+const SG_SECTION_ICONS={concepts:'💡',formulas:'📐',vocab:'📖',examples:'✏️',tips:'⭐'};
+const SG_SECTION_COLORS={concepts:'#60a5fa',formulas:'#c084fc',vocab:'#f472b6',examples:'#34d399',tips:'#f59e0b'};
+
+function renderGuideOutput(guide){
+  const el=document.getElementById('sg-output');
+  const themeColor=getComputedStyle(document.documentElement).getPropertyValue('--acc1').trim()||'#c084fc';
+  const isDark=document.documentElement.getAttribute('data-dark')==='1';
+  const bgColor=isDark?'#1a0a2e':'#fdf6ff';
+  const bg2=isDark?'#241040':'#ffffff';
+  const textColor=isDark?'#f0e6ff':'#2d1f4e';
+  const text2=isDark?'#c9a8f8':'#7060a0';
+  const borderColor=isDark?'#4a2880':'#e8d8f8';
+
+  el.innerHTML=`
+    <div id="sg-render" style="background:${bgColor};border:1.5px solid ${borderColor};border-radius:var(--r);padding:28px;margin-bottom:12px">
+      <!-- Header -->
+      <div style="border-bottom:3px solid ${themeColor};padding-bottom:14px;margin-bottom:20px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-family:'Quicksand',sans-serif;font-size:22px;font-weight:700;color:${textColor}">${esc(guide.title)}</div>
+            ${guide.cls?`<div style="font-size:12px;font-weight:700;color:${themeColor};margin-top:2px">${esc(guide.cls)}</div>`:''}
+            <div style="font-size:11px;color:${text2};font-weight:600;margin-top:2px">Generated ${fmt(guide.created)} · Deskly Study Guide</div>
+          </div>
+          <div style="font-size:32px">📄</div>
+        </div>
+        ${guide.summary?`<div style="font-size:13px;color:${text2};font-weight:600;margin-top:12px;padding:10px 14px;background:${bg2};border-radius:var(--r-sm);border-left:3px solid ${themeColor}">${esc(guide.summary)}</div>`:''}
+      </div>
+      <!-- Sections -->
+      ${(guide.sections||[]).map(sec=>{
+        const icon=SG_SECTION_ICONS[sec.type]||'📌';
+        const col=SG_SECTION_COLORS[sec.type]||themeColor;
+        return`<div style="margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font-size:16px">${icon}</span>
+            <div style="font-family:'Quicksand',sans-serif;font-size:15px;font-weight:700;color:${textColor}">${esc(sec.title)}</div>
+            <div style="flex:1;height:1px;background:${borderColor}"></div>
+          </div>
+          ${(sec.items||[]).map(item=>`
+            <div style="display:flex;gap:12px;padding:8px 10px;margin-bottom:6px;background:${bg2};border-radius:var(--r-sm);border-left:3px solid ${col}">
+              <div style="flex-shrink:0;min-width:120px;max-width:180px;font-size:13px;font-weight:800;color:${col}">${esc(item.term)}</div>
+              <div style="flex:1;font-size:13px;font-weight:600;color:${text2}">${esc(item.def)}</div>
+            </div>`).join('')}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="row" style="margin-bottom:20px">
+      <button class="btn-primary" style="flex:1" onclick="downloadGuideAsPDF(${guide.id})">⬇️ Download PDF</button>
+      <button class="btn" onclick="document.getElementById('sg-output').innerHTML='';renderSavedGuides()">✕ Close</button>
+    </div>`;
+}
+
+function renderSavedGuides(){
+  const el=document.getElementById('sg-saved-list');
+  const guides=U.studyGuides||[];
+  if(!guides.length){el.innerHTML='<div class="empty" style="padding:1.5rem">No study guides yet — upload some notes!</div>';return;}
+  el.innerHTML=guides.map(g=>`<div class="card row" style="cursor:pointer" onclick="renderGuideOutput(${JSON.stringify(g).replace(/"/g,'&quot;')})">
+    <div style="font-size:20px">📄</div>
+    <div class="flex1"><div style="font-size:14px;font-weight:800">${esc(g.title)}</div><div style="font-size:12px;color:var(--text2);font-weight:600">${g.cls?esc(g.cls)+' · ':''}${g.sections?.length||0} sections · ${fmt(g.created)}</div></div>
+    <button class="btn-del" onclick="event.stopPropagation();deleteGuide(${g.id})">✕</button>
+  </div>`).join('');
+}
+
+function deleteGuide(id){U.studyGuides=(U.studyGuides||[]).filter(g=>g.id!==id);saveU();renderSavedGuides();document.getElementById('sg-output').innerHTML='';}
+
+async function downloadGuideAsPDF(guideId){
+  const guide=(U.studyGuides||[]).find(g=>g.id===guideId);if(!guide)return;
+  toast('Preparing PDF…');
+  // Use window.print with a styled iframe
+  const themeColor=getComputedStyle(document.documentElement).getPropertyValue('--acc1').trim()||'#c084fc';
+  const SG_SECTION_ICONS_LOCAL={concepts:'💡',formulas:'📐',vocab:'📖',examples:'✏️',tips:'⭐'};
+  const SG_SECTION_COLORS_LOCAL={concepts:'#60a5fa',formulas:'#c084fc',vocab:'#f472b6',examples:'#34d399',tips:'#f59e0b'};
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Nunito',sans-serif;font-size:13px;color:#2d1f4e;background:#fff;padding:32px;max-width:800px;margin:0 auto}
+    h1{font-family:'Quicksand',sans-serif;font-size:22px;font-weight:700;color:#2d1f4e;margin-bottom:4px}
+    .subtitle{font-size:11px;color:#7060a0;font-weight:600;margin-bottom:8px}
+    .summary{font-size:12px;color:#7060a0;background:#fdf6ff;padding:10px 14px;border-radius:8px;border-left:3px solid ${themeColor};margin-bottom:20px;line-height:1.5}
+    .header{border-bottom:3px solid ${themeColor};padding-bottom:12px;margin-bottom:20px}
+    .section{margin-bottom:18px}
+    .section-title{font-family:'Quicksand',sans-serif;font-size:14px;font-weight:700;color:#2d1f4e;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .item{display:flex;gap:12px;padding:7px 10px;margin-bottom:5px;background:#fdf6ff;border-radius:6px;border-left:3px solid ${themeColor};page-break-inside:avoid}
+    .term{flex-shrink:0;width:160px;font-size:12px;font-weight:800;color:${themeColor}}
+    .def{flex:1;font-size:12px;font-weight:600;color:#7060a0;line-height:1.4}
+    .footer{margin-top:24px;padding-top:10px;border-top:1px solid #e8d8f8;font-size:10px;color:#b8a8d8;text-align:center}
+    @media print{body{padding:16px}}
+  </style></head><body>
+  <div class="header">
+    <h1>${esc(guide.title)}</h1>
+    <div class="subtitle">${guide.cls?esc(guide.cls)+' · ':''}Generated ${fmt(guide.created)} · Deskly</div>
+    ${guide.summary?`<div class="summary">${esc(guide.summary)}</div>`:''}
+  </div>
+  ${(guide.sections||[]).map(sec=>{
+    const icon=SG_SECTION_ICONS_LOCAL[sec.type]||'📌';
+    const col=SG_SECTION_COLORS_LOCAL[sec.type]||themeColor;
+    return`<div class="section">
+      <div class="section-title">${icon} ${esc(sec.title)}</div>
+      ${(sec.items||[]).map(item=>`<div class="item" style="border-left-color:${col}"><div class="term" style="color:${col}">${esc(item.term)}</div><div class="def">${esc(item.def)}</div></div>`).join('')}
+    </div>`;
+  }).join('')}
+  <div class="footer">Made with ✨ Deskly · ${esc(guide.title)}</div>
+  </body></html>`;
+
+  const iframe=document.createElement('iframe');
+  iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:800px;height:600px;border:none';
+  document.body.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  setTimeout(()=>{
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(()=>document.body.removeChild(iframe),2000);
+  },800);
+}
 
 // ═══ INIT ═══
 initSwatches();
