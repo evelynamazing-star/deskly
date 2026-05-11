@@ -900,7 +900,7 @@ let mode='school',dayTab='red';
 let timerInterval=null,timerSecs=0,timerTotal=0,timerPaused=false,focusItem=null,selectedFocusId=null;
 let editTarget=null,editType=null;
 let fcPending=[],fcCurrentDeck=null,fcCardIdx=0,fcFlipped=false;
-let fcFileContent=null,fcFileBase64=null,fcFileMime=null,fcFileType=null;
+let fcFileContent=null,fcFileBase64=null,fcFileMime=null,fcFileType=null,fcPdfImages=null;
 
 // ═══ THEMES ═══
 const THEMES={purple:{label:'Purple',bg:'#c084fc'},blue:{label:'Blue',bg:'#3b82f6'},green:{label:'Green',bg:'#22c55e'},orange:{label:'Orange',bg:'#f97316'},red:{label:'Red',bg:'#ef4444'},pink:{label:'Pink',bg:'#ec4899'},yellow:{label:'Yellow',bg:'#eab308'}};
@@ -1849,9 +1849,13 @@ function processFCFile(file){
   document.getElementById('fc-ai-status').innerHTML='<span class="ai-spinner"></span> Reading file…';
   const ext=file.name.split('.').pop().toLowerCase();fcFileType=ext;
   if(ext==='pdf'){
-    extractPDFText(file).then(text=>{fcFileContent=text;fcFileBase64=null;fcFileMime=null;showFCFileReady(file.name);}).catch(()=>{const r=new FileReader();r.onload=e=>{fcFileBase64=e.target.result.split(',')[1];fcFileContent=null;fcFileMime='application/pdf';showFCFileReady(file.name);};r.readAsDataURL(file);});
-  } else if(ext==='txt'){const r=new FileReader();r.onload=e=>{fcFileContent=e.target.result;fcFileBase64=null;showFCFileReady(file.name);};r.readAsText(file);}
-  else{const r=new FileReader();r.onload=e=>{fcFileBase64=e.target.result.split(',')[1];fcFileContent=null;fcFileMime=file.type;showFCFileReady(file.name);};r.readAsDataURL(file);}
+    extractPDFText(file).then(result=>{
+      if(result.type==='text'){fcFileContent=result.content;fcFileBase64=null;fcFileMime=null;fcPdfImages=null;}
+      else{fcPdfImages=result.content;fcFileContent=null;fcFileBase64=null;fcFileMime=null;}
+      showFCFileReady(file.name+(result.type==='images'?' (scanned — using vision)':' (text extracted)'));
+    }).catch(()=>{toast('Could not read PDF');});
+  } else if(ext==='txt'){const r=new FileReader();r.onload=e=>{fcFileContent=e.target.result;fcFileBase64=null;fcFileMime=null;fcPdfImages=null;showFCFileReady(file.name);};r.readAsText(file);}
+  else{const r=new FileReader();r.onload=e=>{fcFileBase64=e.target.result.split(',')[1];fcFileContent=null;fcFileMime=file.type;fcPdfImages=null;showFCFileReady(file.name);};r.readAsDataURL(file);}
 }
 function showFCFileReady(name){const s=document.getElementById('fc-ai-status');s.style.display='flex';s.innerHTML=`<span style="font-size:18px">📄</span><span style="flex:1"><b>${esc(name)}</b> ready!</span>`;document.getElementById('fc-ai-gen-btn').style.display='inline-block';}
 async function generateAIFlashcards(){
@@ -1861,7 +1865,7 @@ async function generateAIFlashcards(){
   btn.disabled=true;btn.textContent='Generating...';statusEl.innerHTML=`<span class="ai-spinner"></span> Generating ${num} flashcards…`;
   const prompt=`Generate exactly ${num} flashcards to help a student study this material. Return ONLY a JSON array, no markdown: [{"front":"term or question","back":"definition or answer"},...]${fcFileContent?'\n\nMaterial:\n'+fcFileContent.slice(0,12000):''}`;
   try{
-    const resp=await fetch('/api/quiz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,imageBase64:fcFileBase64||null,mimeType:fcFileMime||null,isPDF:fcFileMime==='application/pdf'||fcFileType==='pdf'})});
+    const resp=await fetch('/api/quiz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,imageBase64:fcFileBase64||null,mimeType:fcFileMime||null,isPDF:false,pdfImages:fcPdfImages||null})});
     const data=await resp.json();if(!resp.ok)throw new Error(data.error||'Server error');
     const cards=JSON.parse(data.text.replace(/```json|```/g,'').trim());
     if(!Array.isArray(cards)||!cards.length)throw new Error('No cards returned');
@@ -1933,9 +1937,13 @@ function processFile(file){
   document.getElementById('ai-status').innerHTML='<span class="ai-spinner"></span> Reading file…';
   const ext=file.name.split('.').pop().toLowerCase();U.fileType=ext;
   if(ext==='pdf'){
-    extractPDFText(file).then(text=>{U.fileContent=text;U.fileBase64=null;U.fileMime=null;showFR(file.name);}).catch(()=>{const r=new FileReader();r.onload=e=>{U.fileBase64=e.target.result.split(',')[1];U.fileContent=null;U.fileMime='application/pdf';showFR(file.name);};r.readAsDataURL(file);});
-  } else if(ext==='txt'){const r=new FileReader();r.onload=e=>{U.fileContent=e.target.result;U.fileBase64=null;showFR(file.name);};r.readAsText(file);}
-  else{const r=new FileReader();r.onload=e=>{U.fileBase64=e.target.result.split(',')[1];U.fileContent=null;U.fileMime=file.type;showFR(file.name);};r.readAsDataURL(file);}
+    extractPDFText(file).then(result=>{
+      if(result.type==='text'){U.fileContent=result.content;U.fileBase64=null;U.fileMime=null;U.pdfImages=null;}
+      else{U.pdfImages=result.content;U.fileContent=null;U.fileBase64=null;U.fileMime=null;}
+      showFR(file.name+(result.type==='images'?' (scanned — using vision)':' (text extracted)'));
+    }).catch(()=>{toast('Could not read PDF');});
+  } else if(ext==='txt'){const r=new FileReader();r.onload=e=>{U.fileContent=e.target.result;U.fileBase64=null;U.fileMime=null;U.pdfImages=null;showFR(file.name);};r.readAsText(file);}
+  else{const r=new FileReader();r.onload=e=>{U.fileBase64=e.target.result.split(',')[1];U.fileContent=null;U.fileMime=file.type;U.pdfImages=null;showFR(file.name);};r.readAsDataURL(file);}
 }
 async function extractPDFText(file){
   if(!window.pdfjsLib){
@@ -1972,7 +1980,7 @@ async function generateAIQuiz(){
   btn.disabled=true;btn.textContent='Generating...';statusEl.innerHTML=`<span class="ai-spinner"></span> Generating ${num} questions…`;
   const prompt=`Generate exactly ${num} multiple-choice questions to help a student study this material. Return ONLY a JSON array, no markdown: [{"q":"question","opts":["A","B","C","D"],"correct":0},...] where correct is the 0-based index.${U.fileContent?'\n\nMaterial:\n'+U.fileContent.slice(0,12000):''}`;
   try{
-    const resp=await fetch('/api/quiz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,imageBase64:U.fileBase64||null,mimeType:U.fileMime||null,isPDF:U.fileMime==='application/pdf'||U.fileType==='pdf'})});
+    const resp=await fetch('/api/quiz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,imageBase64:U.fileBase64||null,mimeType:U.fileMime||null,isPDF:false,pdfImages:U.pdfImages||null})});
     const data=await resp.json();if(!resp.ok)throw new Error(data.error||'Server error');
     const qs=JSON.parse(data.text.replace(/```json|```/g,'').trim());
     if(!Array.isArray(qs)||!qs.length)throw new Error('No questions returned');
