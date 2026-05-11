@@ -11,10 +11,10 @@ export default async function handler(req, res) {
   try {
     const { prompt, imageBase64, mimeType, isPDF } = req.body;
 
-    // Groq supports vision on llama-4-scout for images
-    // For PDFs/text we use llama-3.3-70b which is fast and free
     const hasImage = imageBase64 && !isPDF;
-    const model = hasImage ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'llama-3.3-70b-versatile';
+    const model = hasImage
+      ? 'meta-llama/llama-4-scout-17b-16e-instruct'
+      : 'llama-3.3-70b-versatile';
 
     let messages;
 
@@ -32,12 +32,8 @@ export default async function handler(req, res) {
         }
       ];
     } else {
-      messages = [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ];
+      // PDFs and text files: prompt already contains the extracted text
+      messages = [{ role: 'user', content: prompt }];
     }
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
