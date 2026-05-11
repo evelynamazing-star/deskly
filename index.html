@@ -157,8 +157,8 @@ body::before{content:'';position:fixed;inset:0;background:var(--bg-pattern);poin
 .nav-btn:hover{background:var(--bg4);color:var(--text)}
 .nav-btn.active{background:var(--bg3);color:var(--text);box-shadow:var(--shadow-sm)}
 
-#content{flex:1;overflow-y:auto;padding:16px 22px 60px;background:var(--bg2);border:1.5px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)}
-.page{display:none}.page.active{display:block;animation:fadeUp 0.22s ease}
+#content{flex:1;overflow-y:auto;padding:16px 22px 60px;background:var(--bg2);border:1.5px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);position:relative}
+.page{display:none;visibility:hidden;min-height:100px}.page.active{display:block;visibility:visible;animation:fadeUp 0.22s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 .theme-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
@@ -243,7 +243,7 @@ button{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:poi
 .sec{font-family:'Quicksand',sans-serif;font-size:12px;font-weight:700;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin:18px 0 8px}
 .sec:first-child{margin-top:0}
 
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;min-height:0}
 .stat{background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r);padding:12px;text-align:center}
 .stat-n{font-family:'Quicksand',sans-serif;font-size:24px;font-weight:700}
 .stat-l{font-size:11px;font-weight:700;color:var(--text2);margin-top:2px;text-transform:uppercase;letter-spacing:0.04em}
@@ -898,6 +898,16 @@ button{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:poi
     </div>
     <div id="settings-classes-section"></div>
     <div style="border-top:1.5px solid var(--border);margin:16px 0"></div>
+    <div class="sec" style="margin-top:0">Import from Infinite Campus</div>
+    <div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:10px">Upload your Infinite Campus progress report PDF to auto-import all your classes</div>
+    <div class="dropzone" style="padding:16px;text-align:center;cursor:pointer" onclick="document.getElementById('ic-pdf-input').click()">
+      <div style="font-size:24px;margin-bottom:6px">🏫</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text2)">Drop your IC progress report PDF</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px;font-weight:600">or click to upload</div>
+    </div>
+    <input type="file" id="ic-pdf-input" style="display:none" accept=".pdf" onchange="importICPDF(this)">
+    <div id="ic-import-status" style="display:none;margin-top:8px"></div>
+    <div style="border-top:1.5px solid var(--border);margin:16px 0"></div>
     <div class="sec" style="margin-top:0">Add Class</div>
     <div class="row" style="margin-bottom:8px">
       <input type="text" id="s-name" placeholder="Class name" style="flex:2;min-width:130px">
@@ -1525,8 +1535,8 @@ function switchMode(m){
   showPage(pages[0]);
 }
 function showPage(p){
-  ALL_PAGES.forEach(id=>{const el=document.getElementById('page-'+id);if(el){el.style.display='none';el.classList.remove('active');}});
-  const t=document.getElementById('page-'+p);if(t){t.style.display='block';t.classList.add('active');}
+  ALL_PAGES.forEach(id=>{const el=document.getElementById('page-'+id);if(el){el.style.display='none';el.style.visibility='hidden';el.classList.remove('active');}});
+  const t=document.getElementById('page-'+p);if(t){t.style.display='block';t.style.visibility='visible';t.classList.add('active');}
   document.querySelectorAll('#nav .nav-btn').forEach(b=>b.classList.remove('active'));
   const pages=MODES[mode].pages,btn=document.getElementById('nav-'+pages.indexOf(p));if(btn)btn.classList.add('active');
   popClassSelects();
@@ -2305,6 +2315,52 @@ function renderSavedPlans(){
   }).join('');
 }
 function deletePlan(id){U.studyPlans=(U.studyPlans||[]).filter(p=>p.id!==id);saveU();renderSavedPlans();document.getElementById('study-plan-output').innerHTML='';}
+
+// ═══ INFINITE CAMPUS IMPORT ═══
+async function importICPDF(input){
+  const file=input.files[0];if(!file)return;
+  const statusEl=document.getElementById('ic-import-status');
+  statusEl.style.display='flex';statusEl.className='ai-status';
+  statusEl.innerHTML='<span class="ai-spinner"></span> Reading your progress report…';
+  try{
+    const result=await extractPDFText(file);
+    const text=result.type==='text'?result.content:'';
+    if(!text.trim()){statusEl.innerHTML='<span style="font-size:18px">❌</span><span>Could not read PDF text — make sure it\'s not a scanned image</span>';return;}
+    // Parse courses from IC format
+    // Lines like: 42241361-6 HUMAN GEOGRAPHY AP [Robinson, Merritt] SEMESTER B
+    const courseRegex=/\d{8,}-\d+\s+(.+?)\s+\[([^\]]+)\]\s+SEMESTER\s+[AB]/gi;
+    const matches=[...text.matchAll(courseRegex)];
+    if(!matches.length){statusEl.innerHTML='<span style="font-size:18px">❌</span><span>No courses found — is this an Infinite Campus progress report?</span>';return;}
+    // Color palette to assign automatically
+    const colors=['#c084fc','#f472b6','#60a5fa','#34d399','#fb923c','#a78bfa','#2dd4bf','#f97316','#e879f9','#4ade80'];
+    const isBlock=(U.scheduleType||'block')==='block';
+    let added=0,skipped=0;
+    matches.forEach((m,i)=>{
+      const rawName=m[1].trim();
+      const teacher=m[2].trim();
+      // Clean up course name
+      const name=rawName.replace(/\s+/g,' ').trim();
+      // Skip if already exists
+      if((U.classes||[]).some(c=>c.name.toLowerCase()===name.toLowerCase())){skipped++;return;}
+      U.classes=U.classes||[];
+      U.classes.push({
+        id:Date.now()+i,
+        name,
+        teacher,
+        room:'',
+        day:isBlock?(i%2===0?'red':'white'):'regular',
+        color:colors[i%colors.length]
+      });
+      added++;
+    });
+    saveU();renderSettingsLists();popClassSelects();
+    statusEl.innerHTML=`<span style="font-size:18px">✅</span><span><b>${added} class${added!==1?'es':''} imported!</b>${skipped?` (${skipped} already existed)`:''}  Check Classes to assign Red/White day.</span>`;
+    checkAchievements();
+  }catch(err){
+    statusEl.innerHTML=`<span style="font-size:18px">❌</span><span>${esc(err.message||'Something went wrong')}</span>`;
+  }
+  input.value='';
+}
 
 // ═══ STUDY GUIDE ═══
 let sgFileContent=null,sgFileBase64=null,sgFileMime=null,sgFileType=null,sgPdfImages=null;
