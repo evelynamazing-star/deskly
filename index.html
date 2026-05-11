@@ -1944,10 +1944,26 @@ async function extractPDFText(file){
   }
   const arrayBuffer=await file.arrayBuffer();
   const pdf=await window.pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  // Try text extraction first
   let fullText='';
-  for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const content=await page.getTextContent();fullText+=content.items.map(item=>item.str).join(' ')+'\n';}
-  if(!fullText.trim())throw new Error('No text found');
-  return fullText;
+  for(let i=1;i<=Math.min(pdf.numPages,10);i++){
+    const page=await pdf.getPage(i);
+    const content=await page.getTextContent();
+    fullText+=content.items.map(item=>item.str).join(' ')+'\n';
+  }
+  // If we got meaningful text, use it
+  if(fullText.trim().length>100)return{type:'text',content:fullText};
+  // Otherwise it's a scanned PDF — render pages to images
+  const images=[];
+  for(let i=1;i<=Math.min(pdf.numPages,4);i++){
+    const page=await pdf.getPage(i);
+    const viewport=page.getViewport({scale:1.5});
+    const canvas=document.createElement('canvas');
+    canvas.width=viewport.width;canvas.height=viewport.height;
+    await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+    images.push(canvas.toDataURL('image/jpeg',0.85).split(',')[1]);
+  }
+  return{type:'images',content:images};
 }
 function showFR(name){const s=document.getElementById('ai-status');s.style.display='flex';s.innerHTML=`<span style="font-size:18px">📄</span><span style="flex:1"><b>${esc(name)}</b> ready!</span>`;document.getElementById('ai-gen-btn').style.display='inline-block';}
 async function generateAIQuiz(){
