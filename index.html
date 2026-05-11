@@ -1846,8 +1846,11 @@ function fcDzDrop(e){e.preventDefault();fcDzLeave();const f=e.dataTransfer.files
 function handleFCFile(i){const f=i.files[0];if(f)processFCFile(f);}
 function processFCFile(file){
   document.getElementById('fc-ai-status').style.display='flex';
+  document.getElementById('fc-ai-status').innerHTML='<span class="ai-spinner"></span> Reading file…';
   const ext=file.name.split('.').pop().toLowerCase();fcFileType=ext;
-  if(ext==='txt'){const r=new FileReader();r.onload=e=>{fcFileContent=e.target.result;fcFileBase64=null;showFCFileReady(file.name);};r.readAsText(file);}
+  if(ext==='pdf'){
+    extractPDFText(file).then(text=>{fcFileContent=text;fcFileBase64=null;fcFileMime=null;showFCFileReady(file.name);}).catch(()=>{const r=new FileReader();r.onload=e=>{fcFileBase64=e.target.result.split(',')[1];fcFileContent=null;fcFileMime='application/pdf';showFCFileReady(file.name);};r.readAsDataURL(file);});
+  } else if(ext==='txt'){const r=new FileReader();r.onload=e=>{fcFileContent=e.target.result;fcFileBase64=null;showFCFileReady(file.name);};r.readAsText(file);}
   else{const r=new FileReader();r.onload=e=>{fcFileBase64=e.target.result.split(',')[1];fcFileContent=null;fcFileMime=file.type;showFCFileReady(file.name);};r.readAsDataURL(file);}
 }
 function showFCFileReady(name){const s=document.getElementById('fc-ai-status');s.style.display='flex';s.innerHTML=`<span style="font-size:18px">📄</span><span style="flex:1"><b>${esc(name)}</b> ready!</span>`;document.getElementById('fc-ai-gen-btn').style.display='inline-block';}
@@ -1927,9 +1930,24 @@ function dzDrop(e){e.preventDefault();dzLeave();const f=e.dataTransfer.files[0];
 function handleFile(i){const f=i.files[0];if(f)processFile(f);}
 function processFile(file){
   document.getElementById('ai-status').style.display='flex';
+  document.getElementById('ai-status').innerHTML='<span class="ai-spinner"></span> Reading file…';
   const ext=file.name.split('.').pop().toLowerCase();U.fileType=ext;
-  if(ext==='txt'){const r=new FileReader();r.onload=e=>{U.fileContent=e.target.result;U.fileBase64=null;showFR(file.name);};r.readAsText(file);}
+  if(ext==='pdf'){
+    extractPDFText(file).then(text=>{U.fileContent=text;U.fileBase64=null;U.fileMime=null;showFR(file.name);}).catch(()=>{const r=new FileReader();r.onload=e=>{U.fileBase64=e.target.result.split(',')[1];U.fileContent=null;U.fileMime='application/pdf';showFR(file.name);};r.readAsDataURL(file);});
+  } else if(ext==='txt'){const r=new FileReader();r.onload=e=>{U.fileContent=e.target.result;U.fileBase64=null;showFR(file.name);};r.readAsText(file);}
   else{const r=new FileReader();r.onload=e=>{U.fileBase64=e.target.result.split(',')[1];U.fileContent=null;U.fileMime=file.type;showFR(file.name);};r.readAsDataURL(file);}
+}
+async function extractPDFText(file){
+  if(!window.pdfjsLib){
+    await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s);});
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  const arrayBuffer=await file.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  let fullText='';
+  for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const content=await page.getTextContent();fullText+=content.items.map(item=>item.str).join(' ')+'\n';}
+  if(!fullText.trim())throw new Error('No text found');
+  return fullText;
 }
 function showFR(name){const s=document.getElementById('ai-status');s.style.display='flex';s.innerHTML=`<span style="font-size:18px">📄</span><span style="flex:1"><b>${esc(name)}</b> ready!</span>`;document.getElementById('ai-gen-btn').style.display='inline-block';}
 async function generateAIQuiz(){
