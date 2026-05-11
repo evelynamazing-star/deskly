@@ -9,30 +9,34 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt, imageBase64, mimeType, isPDF } = req.body;
+    const { prompt, imageBase64, mimeType, isPDF, pdfImages } = req.body;
 
-    const hasImage = imageBase64 && !isPDF;
-    const model = hasImage
+    const hasPageImages = pdfImages && pdfImages.length > 0;
+    const hasSingleImage = imageBase64 && !isPDF;
+    const model = (hasPageImages || hasSingleImage)
       ? 'meta-llama/llama-4-scout-17b-16e-instruct'
       : 'llama-3.3-70b-versatile';
 
     let messages;
 
-    if (hasImage) {
-      messages = [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image_url',
-              image_url: { url: `data:${mimeType || 'image/jpeg'};base64,${imageBase64}` }
-            },
-            { type: 'text', text: prompt }
-          ]
-        }
-      ];
+    if (hasPageImages) {
+      // Scanned PDF — send each page as a vision image
+      const content = pdfImages.map(img => ({
+        type: 'image_url',
+        image_url: { url: `data:image/jpeg;base64,${img}` }
+      }));
+      content.push({ type: 'text', text: prompt });
+      messages = [{ role: 'user', content }];
+    } else if (hasSingleImage) {
+      messages = [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:${mimeType || 'image/jpeg'};base64,${imageBase64}` } },
+          { type: 'text', text: prompt }
+        ]
+      }];
     } else {
-      // PDFs and text files: prompt already contains the extracted text
+      // Text extracted from PDF or plain text file
       messages = [{ role: 'user', content: prompt }];
     }
 
